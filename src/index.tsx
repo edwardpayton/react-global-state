@@ -58,6 +58,8 @@ export default function(initialState: State): SubscribedState {
     // note:  the name 'useHook' is not needed or used anywhere,
     // but the callback function needs a name because of rules of hooks
     // https://reactjs.org/docs/hooks-rules.html#only-call-hooks-at-the-top-level
+    // when consuming the hook in an app, the name can be anything
+    // eg const [state, setState] = useMyCreatedState()
     const [, set] = useState();
     const refMounted = useRef(true);
 
