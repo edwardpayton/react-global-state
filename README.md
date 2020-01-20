@@ -2,7 +2,7 @@
 
 `yarn add @ejp/react-global-state`
 
-A global state creator - share state around an app with familiar React syntax.
+Share state around an app with familiar React setState like syntax.
 
 _Or yet another globel state manager for React._
 

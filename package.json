@@ -1,7 +1,7 @@
 {
   "name": "@ejp/react-global-state",
   "author": "Edward Payton",
-  "description": "A global state creator - share state around an app with familiar React syntax",
+  "description": "Share state around an app with familiar React setState like syntax",
   "version": "0.1.0",
   "license": "MIT",
   "main": "dist/index.js",
