@@ -1,29 +1,29 @@
 import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import createGlobalState from '../src';
+import createSubscribedState from '../src';
+
+type Obj = { [key: string]: number | Obj };
 
 interface State {
   count: number;
-  func: (arg: any) => void;
-  obj: { aa: number; bb: number };
+  obj: Obj;
 }
 
 const initialState: State = {
   count: 0,
-  func: arg => {
-    console.log('current count:', arg);
-  },
   obj: {
     aa: 1,
-    bb: 2,
+    bb: {
+      cc: 2,
+    },
   },
 };
 
-const useSubscribedState = createGlobalState(initialState);
+const subscribedState = createSubscribedState<State>(initialState);
 
 function Count() {
-  let [{ count }, setState] = useSubscribedState();
+  let [{ count }, setState] = subscribedState();
 
   return (
     <div>
@@ -35,7 +35,7 @@ function Count() {
   );
 }
 function Obj() {
-  let [state, setState] = useSubscribedState();
+  let [state, setState] = subscribedState();
 
   return (
     <div>
@@ -48,23 +48,21 @@ function Obj() {
   );
 }
 function Display() {
-  const [state] = useSubscribedState();
+  const [state] = subscribedState();
 
-  return (
-    <p>
-      count:{state.count} <br />
-      obj:{JSON.stringify(state.obj)}
-    </p>
-  );
+  return <p>state:{JSON.stringify(state)}</p>;
 }
 function JustObj() {
-  const [{ obj, func, count }] = useSubscribedState(['obj']);
+  const [{ obj, count }, setState] = subscribedState(['obj']);
+
+  const logit = () => console.log('example/index >>>', count);
 
   return (
     <p>
+      <button onClick={() => setState({ count: count + 1 })}>+</button>
       obj:{JSON.stringify(obj)} <br />
       count is also available:{count} but doesnt update on change
-      <button onClick={() => func(count)}>Log count</button>
+      <button onClick={logit}>Log count</button>
     </p>
   );
 }
