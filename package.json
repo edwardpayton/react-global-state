@@ -2,7 +2,7 @@
   "name": "@ejp/react-global-state",
   "author": "Edward Payton",
   "description": "Share state around an app with familiar React setState like syntax",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/react-global-state.esm.js",
