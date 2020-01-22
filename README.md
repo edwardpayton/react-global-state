@@ -8,7 +8,7 @@
 <a href="https://www.npmjs.com/package/@ejp/react-global-state">
 <img src="https://badgen.net/npm/types/@ejp/react-global-state"/>
 </a>
-<a href="https://packagephobia.now.sh/result?p=@ejp/react-global-state">
+<a href="https://bundlephobia.com/result?p=@ejp/react-global-state">
 <img src="https://badgen.net/bundlephobia/min/@ejp/react-global-state" /> 
 </a>
 <a href="https://circleci.com/gh/edwardpayton/react-global-state">
