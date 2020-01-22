@@ -28,9 +28,11 @@ function mergeObjects(
 
     if (typeSafe && typeof original[key] !== typeof updates[key])
       throw new Error(
-        `Error updating the state. "${key}" was transformed from "${typeof original[
+        `type of "${key}" was transformed from "${typeof original[
           key
-        ]}" to "${typeof updates[key]}"`
+        ]}" to "${typeof updates[
+          key
+        ]}". If this was intentional add true as a second argument to your setState function`
       );
 
     return (original[key] = updates[key]);
@@ -44,7 +46,7 @@ function mergeObjects(
 export default function createSubscribedState<T>(
   initialState: T
 ): SubscribedState<T> {
-  let state: T = initialState;
+  let state: T = { ...initialState };
   let listeners: ListenerSet<T> = new Set();
   const subscribe = (fn: Listener<T>) => listeners.add(fn);
   const unsubscribe = (fn: Listener<T>) => listeners.delete(fn);
@@ -56,32 +58,32 @@ export default function createSubscribedState<T>(
     const [, set] = useState();
     const refMounted = useRef(true);
 
-    const setState = useCallback((newState: T, typeSafe?: boolean) => {
-      if (
-        !scope.length ||
-        !!Object.keys(newState).find(key => scope.indexOf(key) > -1)
-      ) {
-        console.log('hooks/createSubscribedState >>>', state);
-        state = mergeObjects(state, newState, typeSafe) as T;
-      }
-      listeners.forEach(fn => fn(newState));
+    const setState = useCallback((newState: Partial<T>, typeSafe?: boolean) => {
+      const disallowedKeys = scope.length
+        ? Object.keys(initialState).filter(key => scope.indexOf(key) <= -1)
+        : [];
+
+      const newStateFiltered = Object.keys(newState)
+        .map(key => {
+          const s: Partial<T> = initialState;
+          if (!s.hasOwnProperty(key))
+            throw new Error(`key "${key}" is not found on state object`);
+          return key;
+        })
+        .filter(key => disallowedKeys.indexOf(key) <= -1)
+        .reduce((res, key) => {
+          // TODO - TS errors without asserting to GenericObject. maybe find a better way
+          res[key] = (newState as GenericObject)[key];
+          return res;
+        }, {} as GenericObject);
+
+      state = mergeObjects(state, newStateFiltered, typeSafe) as T;
+      listeners.forEach(fn => fn(newState as T));
     }, []);
 
     useEffect(() => {
-      const updaterEv = (nextState: Partial<T>) => {
-        Object.keys(nextState).forEach(key => {
-          const s: Partial<T> = initialState;
-          if (!s.hasOwnProperty(key))
-            throw new Error(`"${key}" is not found on state object`);
-        });
-        if (
-          refMounted.current &&
-          (!scope.length ||
-            typeof nextState !== 'object' ||
-            Object.keys(nextState).find(key => scope.indexOf(key) > -1))
-        ) {
-          return set({});
-        }
+      const updaterEv = () => {
+        if (refMounted.current) return set({});
       };
       subscribe(updaterEv);
       return () => {

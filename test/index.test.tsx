@@ -1,8 +1,6 @@
 import { ComponentState } from 'react';
 import { renderHook, act, cleanup } from '@testing-library/react-hooks';
-import createGlobalState, {
-  SubscribedState,
-} from '../src/hooks/createSubscribedState';
+import createGlobalState, { SubscribedState } from '../src';
 
 const initialState = { count: 1, obj: { abc: 'xyz' } };
 
@@ -30,23 +28,42 @@ describe('createSubscribedState', () => {
     expect(state.count).toBe(2);
   });
 
+  it('converts the state object to a new type', () => {
+    // expect an error with typeSafe true (default)
+    try {
+      act(() => {
+        setState({ count: '' });
+      });
+    } catch (e) {
+      expect(e.message).toMatch(
+        'type of "count" was transformed from "number" to "string". If this was intentional add true as a second argument to your setState function'
+      );
+    }
+
+    // expect success with typeSafe false
+    act(() => {
+      setState({ count: '' }, false);
+    });
+    expect(state.count).toBe('');
+  });
+
   it('does not increase count when using scope', () => {
     renderHook(() => ([state, setState] = useSubscribedState(['obj'])));
     act(() => {
-      // state.count is already 2 before this setState
       setState({ count: state.count + 1 });
     });
 
-    expect(state.count).toBe(2);
+    expect(state.count).toBe(1);
   });
 
   it('errors when state key is not found', () => {
-    // TODO not working
-    act(() => {
-      setState({ wrongKey: 1 });
-    });
-
-    expect(state).toEqual(initialState);
+    try {
+      act(() => {
+        setState({ wrongKey: 1 });
+      });
+    } catch (e) {
+      expect(e.message).toMatch('key "wrongKey" is not found on state object');
+    }
   });
 
   test.todo('test for setting a deep state & type checking');

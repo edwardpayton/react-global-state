@@ -1,7 +1,7 @@
 import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import createSubscribedState from '../src';
+import createSubscribedStore from '../src';
 
 type Obj = { [key: string]: number | Obj };
 
@@ -20,59 +20,83 @@ const initialState: State = {
   },
 };
 
-const subscribedState = createSubscribedState<State>(initialState);
+const subscribedState = createSubscribedStore<State>(initialState);
 
-function Count() {
+function Standard() {
   let [{ count }, setState] = subscribedState();
 
   return (
     <div>
       Counter
-      <button onClick={() => setState({ count: count - 1 })}>-</button>
-      <span>{count}</span>
-      <button onClick={() => setState({ count: count + 1 })}>+</button>
+      <button onClick={() => setState({ count: count - 1 })}>dec</button>
+      <button onClick={() => setState({ count: count + 1 })}>inc</button>
+      <br />
+      Object
+      <button onClick={() => setState({ obj: { bb: { cc: 3 } } })}>
+        obj.bb.cc = 3
+      </button>
     </div>
   );
 }
-function Obj() {
-  let [state, setState] = subscribedState();
+function Breaking() {
+  const [state, setState] = subscribedState();
 
   return (
     <div>
-      Set Obj
-      <button onClick={() => setState({ obj: { bb: { cc: 2 } } }, false)}>
-        bb
+      Convert 'obj' to a number{' '}
+      <button onClick={() => setState({ obj: 1 }, false)}>convert</button>
+      {typeof state.obj === 'number' && (
+        <span>now obj has been converted, 'obj.bb.cc' button will error</span>
+      )}
+      <br />
+      Try to add a key that doesn't exist
+      <button onClick={() => setState({ keyMissing: 1 })}>attempt</button>
+    </div>
+  );
+}
+function ScopedToObj() {
+  const [{ count }, setState] = subscribedState(['obj']);
+
+  return (
+    <div>
+      Count
+      <button onClick={() => setState({ count: count + 1 })}>
+        inc will not happen
       </button>
-      <span>{JSON.stringify(state.obj)}</span>
     </div>
   );
 }
 function Display() {
   const [state] = subscribedState();
 
-  return <p>state:{JSON.stringify(state)}</p>;
-}
-function JustObj() {
-  const [{ obj, count }, setState] = subscribedState(['obj']);
-
-  const logit = () => console.log('example/index >>>', count);
-
   return (
-    <p>
-      <button onClick={() => setState({ count: count + 1 })}>+</button>
-      obj:{JSON.stringify(obj)} <br />
-      count is also available:{count} but doesnt update on change
-      <button onClick={logit}>Log count</button>
-    </p>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <pre>
+              initial state:
+              {JSON.stringify(initialState, null, 2)}
+            </pre>
+          </td>
+          <td>
+            <pre>
+              current state:
+              {JSON.stringify(state, null, 2)}
+            </pre>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 }
 function App() {
   return (
     <>
-      <Count />
-      <Obj />
+      <Standard />
+      <Breaking />
+      <ScopedToObj />
       <Display />
-      <JustObj />
     </>
   );
 }
