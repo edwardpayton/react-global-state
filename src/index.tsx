@@ -3,30 +3,28 @@ import { useState, useRef, useCallback, useEffect, useDebugValue } from 'react';
 export type Listener<T> = (state: T) => void;
 export type ListenerSet<T> = Set<Listener<T>>;
 // TODO work out whats happening with newState. Changing 'any' to 'T' breaks stuff
-export type CallbackHook<T> = [T, (newState: any, typeSafe?: boolean) => void];
+export type CallbackHook<T> = [T, (newState: any) => void];
 export type SubscribedState<T> = (scope?: string[]) => CallbackHook<T>;
 export type GenericObject = { [key: string]: any };
 
 function mergeObjects(
   original: GenericObject,
-  updates: GenericObject,
-  typeSafe = true
+  updates: GenericObject
 ): GenericObject {
   const isObject = (obj: unknown) => obj && typeof obj === 'object';
   if (!isObject(original) || !isObject(updates)) return updates;
 
   Object.keys(updates).forEach(key => {
     if (Array.isArray(original[key]) && Array.isArray(updates[key])) {
-      return (original[key] = original[key].concat(updates[key]));
+      return (original[key] = updates[key]);
     } else if (isObject(original[key]) && isObject(updates[key])) {
       return (original[key] = mergeObjects(
         Object.assign({}, original[key]),
-        updates[key],
-        typeSafe
+        updates[key]
       ));
     }
 
-    if (typeSafe && typeof original[key] !== typeof updates[key])
+    if (typeof original[key] !== typeof updates[key])
       throw new Error(
         `type of "${key}" was transformed from "${typeof original[
           key
@@ -45,7 +43,16 @@ function mergeObjects(
 
 export default function createSubscribedState<T>(
   initialState: T
-): SubscribedState<T> {
+): SubscribedState<T> | void {
+  if (
+    !initialState ||
+    Object.prototype.toString.call(initialState) !== '[object Object]'
+  ) {
+    return console.error(
+      'A new shared state was created without an initial state'
+    );
+  }
+
   let state: T = { ...initialState };
   let listeners: ListenerSet<T> = new Set();
   const subscribe = (fn: Listener<T>) => listeners.add(fn);
@@ -58,7 +65,7 @@ export default function createSubscribedState<T>(
     const [, set] = useState();
     const refMounted = useRef(true);
 
-    const setState = useCallback((newState: Partial<T>, typeSafe?: boolean) => {
+    const setState = useCallback((newState: Partial<T>) => {
       const disallowedKeys = scope.length
         ? Object.keys(initialState).filter(key => scope.indexOf(key) <= -1)
         : [];
@@ -77,7 +84,7 @@ export default function createSubscribedState<T>(
           return res;
         }, {} as GenericObject);
 
-      state = mergeObjects(state, newStateFiltered, typeSafe) as T;
+      state = mergeObjects(state, newStateFiltered) as T;
       listeners.forEach(fn => fn(newState as T));
     }, []);
 
