@@ -43,14 +43,13 @@ function mergeObjects(
 
 export default function createSubscribedState<T>(
   initialState: T
-): SubscribedState<T> | void {
+): SubscribedState<T> {
   if (
     !initialState ||
     Object.prototype.toString.call(initialState) !== '[object Object]'
   ) {
-    return console.error(
-      'A new shared state was created without an initial state'
-    );
+    console.error('A new shared state was created without an initial state');
+    initialState = {} as T;
   }
 
   let state: T = { ...initialState };
